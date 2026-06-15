@@ -33,5 +33,9 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone [https://github.com/твой_логин/LinuxWGGUI.git](https://github.com/твой_логин/LinuxWGGUI.git)
+git clone [https://github.com/твой_логин/LinuxWGGUI.git](https://github.com/K5ilnik/LinuxWGGUI.git)
 cd LinuxWGGUI
+
+## 📄 Лицензия
+
+Этот проект распространяется под лицензией **GNU General Public License v3.0 (GPL-3.0)**. Подробности смотрите в файле [LICENSE](LICENSE).
