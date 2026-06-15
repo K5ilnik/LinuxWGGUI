@@ -35,5 +35,5 @@ P.S. Это мой первый относительно серьезный пр
 
 ### 1. Клонирование репозитория
 ```bash
-git clone [https://github.com/твой_логин/LinuxWGGUI.git](https://github.com/K5ilnik/LinuxWGGUI.git)
+git clone [https://github.com/K5ilnik/LinuxWGGUI.git](https://github.com/K5ilnik/LinuxWGGUI.git)
 cd LinuxWGGUI
