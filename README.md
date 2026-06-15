@@ -3,7 +3,7 @@
 [![Language](https://img.shields.io/badge/language-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![Framework](https://img.shields.io/badge/framework-Qt-green.svg)](https://www.qt.io/)
 [![Platform](https://img.shields.io/badge/platform-Linux-orange.svg)](https://kernel.org/)
-[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GNU-brightgreen.svg)](LICENSE)
 
 **LinuxWGGUI** — это легковесный, быстрый и надежный графический интерфейс (GUI) для управления туннелями WireGuard в Linux. Забудь про постоянный ввод команд в терминале — управляй своей сетью в один клик с живой статистикой перед глазами.
 
