@@ -35,6 +35,7 @@
 ```bash
 git clone [https://github.com/твой_логин/LinuxWGGUI.git](https://github.com/K5ilnik/LinuxWGGUI.git)
 cd LinuxWGGUI
+bash```
 
 ## 📄 Лицензия
 
