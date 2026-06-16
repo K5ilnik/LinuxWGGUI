@@ -5,12 +5,17 @@
 #include <QModelIndex>
 #include <QMap>
 #include <QTimer>
-#include <QCloseEvent> // Обязательно добавь это
+#include <QCloseEvent>
+#include <QEvent>          // Нужно для changeEvent
+#include <QSystemTrayIcon> // Для иконки в трее
+#include <QMenu>           // Для меню трея
+#include <QAction>         // Для кнопок меню трея
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+// Твоя полная структура из первой версии
 struct TunnelState {
     QString name;
     bool isConnected = false;
@@ -33,7 +38,8 @@ public:
     ~MainWindow();
 
 protected:
-    void closeEvent(QCloseEvent *event) override; // Вот этот метод здесь должен быть!
+    void closeEvent(QCloseEvent *event) override;
+    void changeEvent(QEvent *event) override; // Добавили для сворачивания окна
 
 private slots:
     void onConnectClicked();
@@ -43,9 +49,13 @@ private slots:
     void onDeleteTunnelClicked();
     void onExportClicked();
     void onStatsTimerTick();
+    void on_set_clicked(); // Слот для кнопки настроек!
 
 private:
     Ui::MainWindow *ui;
+    
+    QSystemTrayIcon *trayIcon = nullptr; // Наша переменная для трея
+    
     QStandardItemModel *tunnelModel;
     QMap<QString, TunnelState> tunnelsData;
     QString currentTunnelName;

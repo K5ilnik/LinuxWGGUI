@@ -543,7 +543,7 @@
     <widget class="QLabel" name="label_27">
      <property name="geometry">
       <rect>
-       <x>120</x>
+       <x>20</x>
        <y>550</y>
        <width>231</width>
        <height>20</height>
@@ -556,6 +556,19 @@
      </property>
      <property name="text">
       <string>https://github.com/K5ilnik/LinuxWGGUI</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="set">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>540</y>
+       <width>101</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Настройки</string>
      </property>
     </widget>
    </widget>

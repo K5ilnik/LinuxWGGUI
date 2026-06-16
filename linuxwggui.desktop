@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Name=LinuxWGGUI
+Comment=WireGuard Graphical User Interface
+Exec=LinuxWGGUI
+Icon=linuxwggui
+Categories=Network;
+Terminal=false

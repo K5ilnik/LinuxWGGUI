@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QStyle>
+#include <QCoreApplication>
 #include <QFont>
 #include <QBrush>
 #include <QFile>
@@ -12,44 +14,76 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QSettings>
+#include <QSystemTrayIcon>
+#include "settingsdialog.h"
 
-MainWindow::MainWindow(QWidget *parent) 
-    : QMainWindow(parent), ui(new Ui::MainWindow) {
-    
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{ // <--- ЗДЕСЬ конструктор открывается!
+
     ui->setupUi(this);
 
+ if (!trayIcon) {
+    trayIcon = new QSystemTrayIcon(this);
+}
+
+// 1. Устанавливаем системную иконку (убрали лишний слэш в начале!)
+trayIcon->setIcon(QIcon::fromTheme("network-wire", windowIcon())); 
+
+// 2. Создаем контекстное меню
+QMenu *trayMenu = new QMenu(this);
+
+// 3. Пункт меню "Развернуть"
+QAction *restoreAction = new QAction("Развернуть", this);
+connect(restoreAction, &QAction::triggered, this, &MainWindow::showNormal);
+trayMenu->addAction(restoreAction);
+
+// Разделитель
+trayMenu->addSeparator();
+
+// 4. Пункт меню "Выход"
+QAction *quitAction = new QAction("Выход", this);
+connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
+trayMenu->addAction(quitAction);
+
+// 5. Привязываем меню к трею
+trayIcon->setContextMenu(trayMenu);
+
+// 6. Клик ЛКМ по иконке: скрыть / развернуть
+connect(trayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason){
+    if (reason == QSystemTrayIcon::Trigger) {
+        if (isVisible()) {
+            hide();
+        } else {
+            showNormal();
+            activateWindow();
+        }
+    }
+});
+
+// Показываем иконку
+trayIcon->show();
+
+    // 2. Твои таймеры статистики
     statsTimer = new QTimer(this);
     connect(statsTimer, &QTimer::timeout, this, &MainWindow::onStatsTimerTick);
-    statsTimer->start(1000); // Таймер тикает каждую секунду!
-    
+    statsTimer->start(1000); 
+
+    // 3. Твои вызовы функций инициализации данных
+    checkAndSetSudoers();
     initTunnelsMockData();
 
+    // 4. Твоя модель списка туннелей
     tunnelModel = new QStandardItemModel(this);
     for (const QString &tunnelName : tunnelsData.keys()) {
         QStandardItem *item = new QStandardItem(tunnelName);
-        item->setForeground(QBrush(QColor("#cccccc"))); 
         tunnelModel->appendRow(item);
     }
     ui->listView->setModel(tunnelModel);
 
-    // АВТО-ПРОВЕРКА И НАСТРОЙКА ПРАВ WIREGUARD
-    checkAndSetSudoers();
-
-    // Инициализируем базу данных туннелей
-    initTunnelsMockData();
-
-    initTunnelsMockData();
-
-// Очищаем и заново наполняем модель именами из реальной папки
-
-tunnelModel = new QStandardItemModel(this);
-for (const QString &tunnelName : tunnelsData.keys()) {
-    QStandardItem *item = new QStandardItem(tunnelName);
-    item->setForeground(QBrush(QColor("#cccccc"))); 
-    tunnelModel->appendRow(item);
-}
-ui->listView->setModel(tunnelModel);
-
+    // 5. Все твои коннекты для кнопок и кликов
     connect(ui->pushButton_4, &QPushButton::clicked, this, &MainWindow::onConnectClicked);
     connect(ui->listView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onTunnelSelected);
     connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::onTunnelDoubleClicked);
@@ -57,19 +91,22 @@ ui->listView->setModel(tunnelModel);
     connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::onDeleteTunnelClicked); // Удалить
     connect(ui->pushButton_3, &QPushButton::clicked, this, &MainWindow::onExportClicked);       // Экспорт
 
+    // 6. Выбор дефолтного элемента
     if (tunnelModel->rowCount() > 0) {
         ui->listView->setCurrentIndex(tunnelModel->index(0, 0));
     }
-    connect(ui->listView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onTunnelSelected);
-    connect(ui->listView, &QListView::doubleClicked, this, &MainWindow::onTunnelDoubleClicked);
-    this->setFixedSize(813, 624); 
-}
+
+    // 7. Фиксированный размер твоего главного окна
+    this->setFixedSize(813, 624);
+
+} 
 
 
 
 MainWindow::~MainWindow() {
     delete ui;
 }
+
 
 void MainWindow::initTunnelsMockData() {
     tunnelsData.clear();
@@ -194,13 +231,31 @@ void MainWindow::updateTunnelUI(const QString &name) {
 
     // Стайлинг кнопки подключения
     if (tunnel.isConnected) {
-        ui->pushButton_4->setText("Отключить");
+        ui->pushButton_4->setText(tr("Disconnect"));
         ui->pushButton_4->setStyleSheet("background-color: #d32f2f; color: white; font-weight: bold; border-radius: 4px;");
     } else {
-        ui->pushButton_4->setText("Подключить");
+        ui->pushButton_4->setText(tr("Подключить"));
         ui->pushButton_4->setStyleSheet(""); 
     }
     
+}
+
+void MainWindow::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::WindowStateChange) {
+        if (isMinimized()) {
+            QSettings settings("K5ilnik", "LinuxWGGUI");
+            // Проверяем, хочет ли пользователь уходить в трей
+            bool shrinkToTray = settings.value("minimizeToTray", true).toBool();
+
+            if (shrinkToTray) {
+                QTimer::singleShot(0, this, &QWidget::hide); // Прячем с панели задач
+                if (trayIcon) {
+                    trayIcon->showMessage("LinuxWGGUI", "Приложение свернуто в трей", QSystemTrayIcon::Information, 1500);
+                }
+            }
+        }
+    }
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::onConnectClicked() {
@@ -511,4 +566,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     // Принимаем событие закрытия, программа завершится
     event->accept();
+}
+void MainWindow::on_set_clicked() {
+    // Пробуем вызвать класс через пространство имен Ui::
+    SettingsDialog dialog(this); 
+    
+    if (dialog.exec() == QDialog::Accepted) {
+        // Код при нажатии ОК
+    }
 }

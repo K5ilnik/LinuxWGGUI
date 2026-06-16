@@ -1,30 +1,51 @@
-#include <QApplication>
-#include <QStyleFactory>
 #include "mainwindow.h"
+#include <QApplication>
+#include <QTranslator>
+#include <QSettings>
+#include <QMap>
+#include <QDebug>
 
-int main(int argc, char *argv[]) {
-    QApplication app(argc, argv);
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
 
-    // Включаем темную тему оформления через палитру
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor(45, 45, 45));
-    darkPalette.setColor(QPalette::WindowText, Qt::white);
-    darkPalette.setColor(QPalette::Base, QColor(30, 30, 30));
-    darkPalette.setColor(QPalette::AlternateBase, QColor(45, 45, 45));
-    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-    darkPalette.setColor(QPalette::Text, Qt::white);
-    darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
+    // 1. Указываем ТОЧНО ТЕ ЖЕ параметры, что и в settingsdialog.cpp
+    QSettings settings("K5ilnik", "LinuxWGGUI"); 
+    QString selectedLang = settings.value("lang", "Русский").toString(); 
+    
+    qDebug() << "ЛинуксWG-GUI -> Считанный язык из настроек:" << selectedLang;
 
-    app.setPalette(darkPalette);
+    // 2. Карта языковых пакетов
+    QMap<QString, QString> langFiles = {
+        {"Українська", "LinuxWGGUI_uk.qm"},
+        {"Беларускі",  "LinuxWGGUI_be.qm"},
+        {"English",    "LinuxWGGUI_en.qm"},
+        {"Deutsch",    "LinuxWGGUI_de.qm"},
+        {"Français",   "LinuxWGGUI_fr.qm"},
+        {"Italiano",   "LinuxWGGUI_it.qm"}
+    };
 
-    MainWindow window;
-    window.show();
+    // 3. Загружаем и применяем переводчик
+    QTranslator *translator = new QTranslator(&a);
 
-    return app.exec();
+    if (selectedLang != "Русский" && langFiles.contains(selectedLang)) {
+        QString qmFile = langFiles.value(selectedLang);
+        QString resourcePath = ":/i18n/" + qmFile;
+        qDebug() << "ЛинуксWG-GUI -> Пробуем загрузить:" << resourcePath;
+
+        if (translator->load(resourcePath)) {
+            a.installTranslator(translator);
+            qDebug() << "ЛинуксWG-GUI -> УСПЕХ: Перевод успешно применен!";
+        } else {
+            qDebug() << "ЛинуксWG-GUI -> ОШИБКА: Не удалось найти перевод по пути" << resourcePath;
+        }
+    } else {
+        qDebug() << "ЛинуксWG-GUI -> Выбран дефолтный русский язык, переводчик не требуется.";
+    }
+
+    // 4. Окно создается СТРОГО ПОСЛЕ загрузки перевода!
+    MainWindow w;
+    w.show();
+    
+    return a.exec();
 }
